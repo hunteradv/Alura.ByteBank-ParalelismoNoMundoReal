@@ -36,16 +36,39 @@ namespace ByteBank.View
         {
             var accounts = r_Repository.GetClientAccount();
 
+            var accountsPart1 = accounts.Take(accounts.Count() / 2);
+            var accountsPart2 = accounts.Skip(accounts.Count() / 2);
+
             var result = new List<string>();
 
             UpdateView(new List<string>(), TimeSpan.Zero);
 
             var start = DateTime.Now;
 
-            foreach (var account in accounts)
+            Thread threadPart1 = new Thread(() =>
             {
-                var accountResult = r_Service.ConsolidarMovimentacao(account);
-                result.Add(accountResult);
+                foreach (var account in accountsPart1)
+                {
+                    var resultProcess = r_Service.ConsolidarMovimentacao(account);
+                    result.Add(resultProcess);
+                }
+            });
+
+            Thread threadPart2 = new Thread(() =>
+            {
+                foreach (var account in accountsPart2)
+                {
+                    var resultProcess = r_Service.ConsolidarMovimentacao(account);
+                    result.Add(resultProcess);
+                }
+            });
+
+            threadPart1.Start();
+            threadPart2.Start();
+
+            while(threadPart1.IsAlive || threadPart2.IsAlive)
+            {
+                //verifica a todo momento se a propriedade IsAlive retorna true, quando restornar false termina a execução das duas threads
             }
 
             var end = DateTime.Now;
