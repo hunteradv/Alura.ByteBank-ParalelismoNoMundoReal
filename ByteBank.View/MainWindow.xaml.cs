@@ -36,8 +36,17 @@ namespace ByteBank.View
         {
             var accounts = r_Repository.GetClientAccount();
 
-            var accountsPart1 = accounts.Take(accounts.Count() / 2);
-            var accountsPart2 = accounts.Skip(accounts.Count() / 2);
+            var accountsQuantityPerThread = accounts.Count() / 8;
+
+            var accountsPart1 = accounts.Take(accountsQuantityPerThread);
+            var accountsPart2 = accounts.Skip(accountsQuantityPerThread).Take(accountsQuantityPerThread);
+            var accountsPart3 = accounts.Skip(accountsQuantityPerThread * 2).Take(accountsQuantityPerThread);
+            var accountsPart4 = accounts.Skip(accountsQuantityPerThread * 3).Take(accountsQuantityPerThread);
+            var accountsPart5 = accounts.Skip(accountsQuantityPerThread * 4).Take(accountsQuantityPerThread);
+            var accountsPart6 = accounts.Skip(accountsQuantityPerThread * 5).Take(accountsQuantityPerThread);
+            var accountsPart7 = accounts.Skip(accountsQuantityPerThread * 6).Take(accountsQuantityPerThread);
+            var accountsPart8 = accounts.Skip(accountsQuantityPerThread * 7);
+
 
             var result = new List<string>();
 
@@ -63,10 +72,71 @@ namespace ByteBank.View
                 }
             });
 
+            Thread threadPart3 = new Thread(() =>
+            {
+                foreach (var account in accountsPart3)
+                {
+                    var resultProcess = r_Service.ConsolidarMovimentacao(account);
+                    result.Add(resultProcess);
+                }
+            });
+
+            Thread threadPart4 = new Thread(() =>
+            {
+                foreach (var account in accountsPart4)
+                {
+                    var resultProcess = r_Service.ConsolidarMovimentacao(account);
+                    result.Add(resultProcess);
+                }
+            });
+
+            Thread threadPart5 = new Thread(() =>
+            {
+                foreach (var account in accountsPart5)
+                {
+                    var resultProcess = r_Service.ConsolidarMovimentacao(account);
+                    result.Add(resultProcess);
+                }
+            });
+
+            Thread threadPart6 = new Thread(() =>
+            {
+                foreach (var account in accountsPart6)
+                {
+                    var resultProcess = r_Service.ConsolidarMovimentacao(account);
+                    result.Add(resultProcess);
+                }
+            });
+
+            Thread threadPart7 = new Thread(() =>
+            {
+                foreach (var account in accountsPart7)
+                {
+                    var resultProcess = r_Service.ConsolidarMovimentacao(account);
+                    result.Add(resultProcess);
+                }
+            });
+
+            Thread threadPart8 = new Thread(() =>
+            {
+                foreach (var account in accountsPart8)
+                {
+                    var resultProcess = r_Service.ConsolidarMovimentacao(account);
+                    result.Add(resultProcess);
+                }
+            });
+
             threadPart1.Start();
             threadPart2.Start();
+            threadPart3.Start();
+            threadPart4.Start();
+            threadPart5.Start();
+            threadPart6.Start();
+            threadPart7.Start();
+            threadPart8.Start();
 
-            while(threadPart1.IsAlive || threadPart2.IsAlive)
+            while (threadPart1.IsAlive || threadPart2.IsAlive || threadPart3.IsAlive || threadPart4.IsAlive || threadPart5.IsAlive || threadPart6.IsAlive || threadPart7.IsAlive 
+                || threadPart8.IsAlive)
             {
                 //verifica a todo momento se a propriedade IsAlive retorna true, quando restornar false termina a execução das duas threads
             }
