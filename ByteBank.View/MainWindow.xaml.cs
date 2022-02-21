@@ -34,6 +34,10 @@ namespace ByteBank.View
 
         private void BtnProcessar_Click(object sender, RoutedEventArgs e)
         {
+            var taskSchedulerUI = TaskScheduler.FromCurrentSynchronizationContext();
+
+            BtnProcessar.IsEnabled = false;
+
             var accounts = r_Repository.GetClientAccount();
 
             var result = new List<string>();
@@ -51,11 +55,16 @@ namespace ByteBank.View
                 });
             }).ToArray();
 
-            Task.WaitAll(accountsTasks);
-            
-            var end = DateTime.Now;
-
-            UpdateView(result, end - start);
+            Task.WhenAll(accountsTasks)
+                .ContinueWith(task =>
+                {
+                    var end = DateTime.Now;
+                    UpdateView(result, end - start);
+                }, taskSchedulerUI)
+                .ContinueWith(task =>
+                {
+                    BtnProcessar.IsEnabled = true;
+                }, taskSchedulerUI);
         }
 
         private void UpdateView(List<String> result, TimeSpan elapsedTime)
