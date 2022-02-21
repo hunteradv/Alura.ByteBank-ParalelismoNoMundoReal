@@ -9,7 +9,7 @@ namespace ByteBank.Core.Service
 {
     public class ClientAccountService
     {
-        public string ConsolidarMovimentacao(ClientAccount account)
+        public string ConsolidateAccounts(ClientAccount account)
         {
             var sum = 0m;
 

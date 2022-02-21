@@ -40,31 +40,40 @@ namespace ByteBank.View
 
             var accounts = r_Repository.GetClientAccount();
 
-            var result = new List<string>();
-
             UpdateView(new List<string>(), TimeSpan.Zero);
 
             var start = DateTime.Now;
-
-            var accountsTasks = accounts.Select(account =>
-            {
-                return Task.Factory.StartNew(() =>
-                {
-                    var resultAccount = r_Service.ConsolidarMovimentacao(account);
-                    result.Add(resultAccount);
-                });
-            }).ToArray();
-
-            Task.WhenAll(accountsTasks)
+            
+            ConsolidateAccounts(accounts)
                 .ContinueWith(task =>
                 {
                     var end = DateTime.Now;
+                    var result = task.Result;
                     UpdateView(result, end - start);
                 }, taskSchedulerUI)
                 .ContinueWith(task =>
                 {
                     BtnProcessar.IsEnabled = true;
                 }, taskSchedulerUI);
+        }
+
+        private Task<List<string>> ConsolidateAccounts(IEnumerable<ClientAccount> accounts)
+        {
+            var result = new List<string>();
+
+            var tasks = accounts.Select(account =>
+            {
+                return Task.Factory.StartNew(() =>
+                {
+                    var resultAccount = r_Service.ConsolidateAccounts(account);
+                    result.Add(resultAccount);
+                });
+            });
+
+            return Task.WhenAll(tasks).ContinueWith(t =>
+            {
+                return result;
+            });
         }
 
         private void UpdateView(List<String> result, TimeSpan elapsedTime)
