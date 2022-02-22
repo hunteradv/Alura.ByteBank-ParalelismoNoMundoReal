@@ -32,10 +32,8 @@ namespace ByteBank.View
             r_Service = new ClientAccountService();
         }
 
-        private void BtnProcessar_Click(object sender, RoutedEventArgs e)
+        private async void BtnProcessar_Click(object sender, RoutedEventArgs e)
         {
-            var taskSchedulerUI = TaskScheduler.FromCurrentSynchronizationContext();
-
             BtnProcessar.IsEnabled = false;
 
             var accounts = r_Repository.GetClientAccount();
@@ -43,43 +41,26 @@ namespace ByteBank.View
             UpdateView(new List<string>(), TimeSpan.Zero);
 
             var start = DateTime.Now;
-            
-            ConsolidateAccounts(accounts)
-                .ContinueWith(task =>
-                {
-                    var end = DateTime.Now;
-                    var result = task.Result;
-                    UpdateView(result, end - start);
-                }, taskSchedulerUI)
-                .ContinueWith(task =>
-                {
-                    BtnProcessar.IsEnabled = true;
-                }, taskSchedulerUI);
+
+            var result = await ConsolidateAccounts(accounts);
+            var end = DateTime.Now;
+            UpdateView(result, end - start);
+            BtnProcessar.IsEnabled = true;
         }
 
-        private Task<List<string>> ConsolidateAccounts(IEnumerable<ClientAccount> accounts)
+        private async Task<string[]> ConsolidateAccounts(IEnumerable<ClientAccount> accounts)
         {
-            var result = new List<string>();
+            var tasks = accounts.Select(account =>            
+                Task.Factory.StartNew(() => r_Service.ConsolidateAccounts(account))
+            );
 
-            var tasks = accounts.Select(account =>
-            {
-                return Task.Factory.StartNew(() =>
-                {
-                    var resultAccount = r_Service.ConsolidateAccounts(account);
-                    result.Add(resultAccount);
-                });
-            });
-
-            return Task.WhenAll(tasks).ContinueWith(t =>
-            {
-                return result;
-            });
+            return await Task.WhenAll(tasks);
         }
 
-        private void UpdateView(List<String> result, TimeSpan elapsedTime)
+        private void UpdateView(IEnumerable<String> result, TimeSpan elapsedTime)
         {
             var tempoDecorrido = $"{ elapsedTime.Seconds }.{ elapsedTime.Milliseconds} segundos!";
-            var message = $"Processamento de {result.Count} clientes em {tempoDecorrido}";
+            var message = $"Processamento de {result.Count()} clientes em {tempoDecorrido}";
 
             LstResultados.ItemsSource = result;
             TxtTempo.Text = message;
