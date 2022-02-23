@@ -24,6 +24,7 @@ namespace ByteBank.View
     {
         private readonly ClientAccountRepository r_Repository;
         private readonly ClientAccountService r_Service;
+        private CancellationTokenSource _cts;
 
         public MainWindow()
         {
@@ -37,6 +38,8 @@ namespace ByteBank.View
         {
             BtnProcessar.IsEnabled = false;
 
+            _cts = new CancellationTokenSource();
+
             var accounts = r_Repository.GetClientAccount();
 
             PgsProgress.Maximum = accounts.Count();
@@ -45,28 +48,49 @@ namespace ByteBank.View
 
             var start = DateTime.Now;
 
+            BtnCancel.IsEnabled = true;
+
             var progress = new Progress<String>(str =>
             PgsProgress.Value++);
-            //var byteBankProgress = new ByteBankProgress<String>(str =>
-            //PgsProgress.Value++);
 
-            var result = await ConsolidateAccounts(accounts, byteBankProgress);
-            var end = DateTime.Now;
-            UpdateView(result, end - start);
-            BtnProcessar.IsEnabled = true;
+            try
+            {
+                var result = await ConsolidateAccounts(accounts, progress, _cts.Token);
+                var end = DateTime.Now;
+                UpdateView(result, end - start);
+            }
+            catch (OperationCanceledException)
+            {
+                TxtTempo.Text = "Operação cancelada pelo usuário";
+            }
+            finally
+            {
+                BtnProcessar.IsEnabled = true;
+                BtnCancel.IsEnabled = false;
+            }
         }
 
-        private async Task<string[]> ConsolidateAccounts(IEnumerable<ClientAccount> accounts, IProgress<string> progressReporter)
+        private void BtnCancel_Click(object sender, RoutedEventArgs e)
+        {
+            BtnCancel.IsEnabled = false;
+            _cts.Cancel();
+        }
+
+        private async Task<string[]> ConsolidateAccounts(IEnumerable<ClientAccount> accounts, IProgress<string> progressReporter, CancellationToken ct)
         {
             var tasks = accounts.Select(account =>
                 Task.Factory.StartNew(() =>
                 {
-                    var consolidateResult = r_Service.ConsolidateAccounts(account);
+                    ct.ThrowIfCancellationRequested();
+
+                    var consolidateResult = r_Service.ConsolidateAccounts(account, ct);
 
                     progressReporter.Report(consolidateResult);
 
+                    ct.ThrowIfCancellationRequested();
+
                     return consolidateResult;
-                })
+                }, ct)
             );
 
             return await Task.WhenAll(tasks);

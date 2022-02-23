@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ByteBank.Core.Service
@@ -11,11 +12,20 @@ namespace ByteBank.Core.Service
     {
         public string ConsolidateAccounts(ClientAccount account)
         {
+            return ConsolidateAccounts(account, CancellationToken.None);
+        }
+
+        public string ConsolidateAccounts(ClientAccount account, CancellationToken ct)
+        {
             var sum = 0m;
 
             foreach (var movement in account.Movements)
+            {
+                ct.ThrowIfCancellationRequested();
                 sum += movement.Value * MultiplicationFactor(movement.Date);
+            }
 
+            ct.ThrowIfCancellationRequested();
             UpdateInvestments(account);
             return $"Cliente {account.ClientName} tem saldo atualizado de R${sum.ToString("#00.00")}";
         }
