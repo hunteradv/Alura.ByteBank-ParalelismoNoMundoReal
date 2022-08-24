@@ -45,7 +45,7 @@
         <TextBlock DockPanel.Dock="Top"
                    Name="TxtProgresso"/>
         
-        <!--Barra de progresso para mostrar a -->
+        <!--Barra de progresso-->
         <ProgressBar Name="PgsProgress"
                      Minimum="0"
                      Height="23"
