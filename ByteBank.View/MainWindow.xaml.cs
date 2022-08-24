@@ -1,4 +1,4 @@
-﻿using ByteBank.Core.Model;
+﻿    using ByteBank.Core.Model;
 using ByteBank.Core.Repository;
 using ByteBank.Core.Service;
 using ByteBank.View.Utils;
@@ -52,6 +52,8 @@ namespace ByteBank.View
 
             var progress = new Progress<String>(str =>
             PgsProgress.Value++);
+
+            //var progess = new ByteBankProgress<String>(str => PgsProgress.Value++);
 
             try
             {

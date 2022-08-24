@@ -38,7 +38,7 @@ namespace ByteBank.Core.Service
             var result = 1m;
 
             for (int i = 0; i < calendarDaysFromTheDueDate * 2; i++)
-                result = result * CTE_FACTOR;
+                result *= CTE_FACTOR;
 
             return result;
         }
